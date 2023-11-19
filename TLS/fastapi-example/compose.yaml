@@ -1,0 +1,20 @@
+services:
+  api-test:
+    image: fastapi-test:0.1.0
+    container_name: api-test
+    networks:
+      - back-db
+    expose:
+      - "5000"
+  nginx-proxy:
+    image: shkedia_tls_component:0.1.0
+    container_name: ssl-proxy
+    networks:
+      - back-db
+    expose:
+      - "443"
+    ports:
+      - "443:443"
+
+networks:
+  back-db: {}
