@@ -8,6 +8,22 @@ bash ssl.sh [ip/domain]
 ```
 
 # Testing
+The basic test includes the following steps:
+1. Running FastApi Service (as container)
+2. Running the NGINX
+3. Accessing the FastAPI through http directly
+4. Accessing the FastAPI through https redirect
+
+## Deploy the containers for the test
+```bash
+sudo docker compose -f TLS/fastapi-example/compose.yaml up -d
+```
+
+## Build the fastapi image
+```bash
+sudo docker build TLS/fastapi-example/. -t fastapi-test:0.1.0
+```
+
 
 # Using the certificates
 ## Server Side
@@ -20,7 +36,7 @@ For FastAPI nginx container should be used to handle all the SSL/TLS Process.
     Use the [nginx beginners guide](https://nginx.org/en/docs/beginners_guide.html#conf_structure) and [HTTPS explanation](https://nginx.org/en/docs/http/configuring_https_servers.html)
 3. Build the component image
     ```bash
-    docker build . -t shkedia_tls_component:0.1.0
+    sudo docker build -f TLS/. -t shkedia_tls_component:0.1.0
     ```
 ## Client Side
 ### Chrome in windows
