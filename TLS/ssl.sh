@@ -16,15 +16,15 @@ openssl req -x509 \
             -nodes \
             -newkey rsa:2048 \
             -subj "/CN=${DOMAIN}/C=US/L=San Fransisco" \
-            -keyout rootCA.key -out rootCA.crt 
+            -keyout .local/certificate/rootCA.key -out .local/certificate/rootCA.crt 
 
 # Generate Private key 
 
-openssl genrsa -out ${DOMAIN}.key 2048
+openssl genrsa -out .local/nginx_config/private/${DOMAIN}.key 2048
 
 # Create csf conf
 
-cat > csr.conf <<EOF
+cat > .local/certificate/csr.conf <<EOF
 [ req ]
 default_bits = 2048
 prompt = no
@@ -53,7 +53,7 @@ EOF
 
 # create CSR request using private key
 
-openssl req -new -key ${DOMAIN}.key -out ${DOMAIN}.csr -config csr.conf
+openssl req -new -key .local/nginx_config/private/${DOMAIN}.key -out .local/certificate/${DOMAIN}.csr -config .local/certificate/csr.conf
 
 # Create a external config file for the certificate
 
@@ -72,8 +72,8 @@ EOF
 # Create SSl with self signed CA
 
 openssl x509 -req \
-    -in ${DOMAIN}.csr \
-    -CA rootCA.crt -CAkey rootCA.key \
-    -CAcreateserial -out ${DOMAIN}.crt \
+    -in .local/certificate/${DOMAIN}.csr \
+    -CA .local/certificate/rootCA.crt -CAkey .local/certificate/rootCA.key \
+    -CAcreateserial -out .local/nginx_config/cert/${DOMAIN}.crt \
     -days 365 \
-    -sha256 -extfile cert.conf
+    -sha256 -extfile .local/certificate/cert.conf
