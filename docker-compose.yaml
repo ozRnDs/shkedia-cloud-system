@@ -1,0 +1,122 @@
+services:
+  repo-api:
+    image: public.ecr.aws/q2n5r5e8/project-shkedia/repo-service:${MEDIA_REPO_SERVICE_VERSION}
+    container_name: media_repo_api
+    env_file: 
+      - .local/media_repo_service_$ENVIRONMENT.env
+    environment:
+      - IMAGES_REPO_URL=shekdia-dev-storage
+      - ENVIRONMENT
+    expose:
+      - "5000"
+    volumes:
+      - ${AWS_CRED_LOCATION}:/root/.aws
+    restart: always
+    networks:
+      - shkedia-cloud
+
+  media-db:
+    image: public.ecr.aws/q2n5r5e8/project-shkedia/media-db-service:${MEDIA_DB_SERVICE_VERSION}
+    container_name: media_db_api
+    environment:
+      - CREDENTIALS_FOLDER_NAME=/temp
+      - AUTH_DB_CREDENTIALS_LOCATION=/temp/postgres_credentials/postgres_credentials.json
+      - JWT_KEY_LOCATION=/temp/jwt_token
+      - TOKEN_TIME_PERIOD=15
+      - ENVIRONMENT=dev
+    expose:
+      - "5000"
+    volumes:
+      - ${HOST_MOUNT}:/temp
+    restart: always
+    networks:
+      - shkedia-cloud
+
+  auth-api:
+    image: public.ecr.aws/q2n5r5e8/project-shkedia/auth-service:${AUTH_SERVICE_VERSION}
+    container_name: auth_api
+    environment:
+      - CREDENTIALS_FOLDER_NAME=/temp
+      - AUTH_DB_CREDENTIALS_LOCATION=/temp/postgres_credentials/postgres_credentials.json
+      - JWT_KEY_LOCATION=/temp/jwt_token
+      - TOKEN_TIME_PERIOD=15
+      - ENVIRONMENT=dev
+    expose:
+      - "5000"
+    volumes:
+      - ${HOST_MOUNT}:/temp
+    restart: always
+    networks:
+      - shkedia-cloud
+
+  upload-api:
+    image: public.ecr.aws/q2n5r5e8/project-shkedia/upload-service:${UPLOAD_SERVICE_VERSION}
+    container_name: upload_api
+    environment:
+      - JWT_KEY_LOCATION=/temp/jwt_token
+      - TOKEN_TIME_PERIOD=15
+      - MEDIA_DB_HOST=media_db_api
+      - MEDIA_DB_PORT=5000
+      - MEDIA_REPO_HOST=media_repo_api
+      - MEDIA_REPO_PORT=5000
+      - USER_DB_HOST=auth_api
+      - USER_DB_PORT=5000
+      - THUMBNAIL_MAX_HEIGHT=500
+      - THUMBNAIL_MAX_WIDTH=500
+      - PUBLIC_KEY_LOCATION=/temp/data.pub
+    expose:
+      - "5000"
+    # ports:
+    #   - "4433:5000"
+    volumes:
+      - ${HOST_MOUNT}:/temp
+    restart: always
+    networks:
+      - shkedia-cloud
+
+  gallery-backend:
+    image: public.ecr.aws/q2n5r5e8/project-shkedia/gallery-service:${GALLERY_SERVICE_VERSION}
+    container_name: gallery_backend
+    env_file: 
+      - .local/gallery_service_${ENVIRONMENT}.env
+    environment:
+      - CREDENTIALS_FOLDER_NAME=/temp
+      - JWT_KEY_LOCATION=/temp/jwt_token
+      - TOKEN_TIME_PERIOD=15
+      - MEDIA_DB_HOST=media_db_api
+      - MEDIA_DB_PORT=5000
+      - MEDIA_REPO_HOST=media_repo_api
+      - MEDIA_REPO_PORT=5000
+      - USER_DB_HOST=auth_api
+      - USER_DB_PORT=5000
+      - THUMBNAIL_MAX_HEIGHT=500
+      - THUMBNAIL_MAX_WIDTH=500
+      - PUBLIC_KEY_LOCATION=/temp/data.pub
+      - PRIVATE_KEY_LOCATION=/temp/data
+      - LOCAL_CACHE_LOCATION=/temp/local_cache.pickle
+      - DEBUG=1
+    expose:
+      - "8000"
+    # ports:
+    #   - "4432:5000"
+    volumes:
+      - ${HOST_MOUNT}:/temp
+    restart: always
+    networks:
+      - shkedia-cloud
+
+  nginx:
+    image: public.ecr.aws/q2n5r5e8/project-shkedia/nginx-service:${NGINX_SERVICE_VERSION}
+    # image: shkedia-photo-nginx:${NGINX_SERVICE_VERSION}
+    container_name: nginx_service
+    ports:
+      - "443:443"
+      - "80:80"
+    volumes:
+      - ${HOST_MOUNT}:/temp
+    restart: always
+    networks:
+      - shkedia-cloud
+
+networks:
+  shkedia-cloud: {}
