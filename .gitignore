@@ -9,6 +9,15 @@ __pycache__/
 # Local dev folder
 .local/
 
+# Security
+*.crt
+*.csr
+*.key
+
+# Images
+*.png
+*.svg
+
 # Distribution / packaging
 .Python
 build/
