@@ -46,6 +46,8 @@ services:
     volumes:
       - ${HOST_MOUNT}:/temp
     restart: always
+    ports:
+      - "4430:5000"
     networks:
       - shkedia-cloud
 
@@ -66,8 +68,8 @@ services:
       - PUBLIC_KEY_LOCATION=/temp/data.pub
     expose:
       - "5000"
-    # ports:
-    #   - "4433:5000"
+    ports:
+      - "4433:5000"
     volumes:
       - ${HOST_MOUNT}:/temp
     restart: always
@@ -113,7 +115,7 @@ services:
       - "443:443"
       - "80:80"
     volumes:
-      - ${HOST_MOUNT}:/temp
+      - /var/static:/var/static
     restart: always
     networks:
       - shkedia-cloud
