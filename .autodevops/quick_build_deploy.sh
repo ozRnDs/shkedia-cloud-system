@@ -6,5 +6,6 @@ export ENVIRONMENT=$1
 
 echo Start CD process to $ENVIRONMENT environment
 source .autodevops/SERVICE_VERSIONS.properties
+source .local/important_variables.properties
 
 docker compose up -d
