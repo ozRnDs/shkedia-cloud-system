@@ -103,6 +103,7 @@ services:
       - THUMBNAIL_MAX_HEIGHT=500
       - THUMBNAIL_MAX_WIDTH=500
       - LOCAL_CACHE_LOCATION=/temp/local_cache.pickle
+      - PRIVATE_KEY_LOCATION=/temp/data
       - DEBUG=1
     expose:
       - "8000"
