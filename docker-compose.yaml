@@ -23,8 +23,8 @@ services:
     container_name: media_db_api
     environment:
       - CREDENTIALS_FOLDER_NAME=/temp
-      - TOKEN_TIME_PERIOD=15
-      - ENVIRONMENT=dev
+      - TOKEN_TIME_PERIOD=120
+      - ENVIRONMENT=dev0
     expose:
       - "5000"
     restart: always
@@ -42,8 +42,8 @@ services:
     image: public.ecr.aws/q2n5r5e8/project-shkedia/auth-service:${AUTH_SERVICE_VERSION}
     container_name: auth_api
     environment:
-      - TOKEN_TIME_PERIOD=15
-      - ENVIRONMENT=dev
+      - TOKEN_TIME_PERIOD=120
+      - ENVIRONMENT
       - AUTH_DB_CREDENTIALS_LOCATION=/temp/postgres_credentials/postgres_credentials.json
       - JWT_KEY_LOCATION=/temp/jwt_token
     expose:
@@ -63,7 +63,7 @@ services:
     image: public.ecr.aws/q2n5r5e8/project-shkedia/upload-service:${UPLOAD_SERVICE_VERSION}
     container_name: upload_api
     environment:
-      - TOKEN_TIME_PERIOD=15
+      - TOKEN_TIME_PERIOD=120
       - MEDIA_DB_HOST=media_db_api
       - MEDIA_DB_PORT=5000
       - MEDIA_REPO_HOST=media_repo_api
@@ -74,6 +74,10 @@ services:
       - THUMBNAIL_MAX_WIDTH=500
       - PUBLIC_KEY_LOCATION=/temp/data.pub
       - JWT_KEY_LOCATION=/temp/jwt_token
+      - VERSION=${UPLOAD_SERVICE_VERSION}
+      - ENVIRONMENT
+      - IMAGE_CONTENT_TOPIC_NAME=images_content
+      - IMAGE_METADATA_TOPIC_NAME=images_metadata
     expose:
       - "5000"
     ports:
@@ -86,6 +90,10 @@ services:
         target: /temp/data.pub
       - source: jwt-key
         target: /temp/jwt_token
+      - source: aws-config
+        target: /root/.aws/config
+      - source: aws-cred
+        target: /root/.aws/credentials
 
   gallery-backend:
     image: public.ecr.aws/q2n5r5e8/project-shkedia/gallery-service:${GALLERY_SERVICE_VERSION}
@@ -93,7 +101,7 @@ services:
     environment:
       - CREDENTIALS_FOLDER_NAME=/temp
       - JWT_KEY_LOCATION=/temp/jwt_token
-      - TOKEN_TIME_PERIOD=15
+      - TOKEN_TIME_PERIOD=120
       - MEDIA_DB_HOST=media_db_api
       - MEDIA_DB_PORT=5000
       - MEDIA_REPO_HOST=media_repo_api
@@ -105,10 +113,12 @@ services:
       - LOCAL_CACHE_LOCATION=/temp/local_cache.pickle
       - PRIVATE_KEY_LOCATION=/temp/data
       - DEBUG=1
+      - ALLOWED_HOST=10.0.0.5
+      - UPLOAD_URL=https://10.0.0.5/images/v2
     expose:
       - "8000"
-    ports:
-      - "4435:8000"
+    # ports:
+    #   - "4435:8000"
     volumes:
       - ${HOST_MOUNT}:/temp
     restart: always
@@ -117,6 +127,45 @@ services:
     secrets:
       - source: private-key
         target: /temp/data
+
+  engine-months-worker:
+    image: public.ecr.aws/q2n5r5e8/project-shkedia/months-engine-service:${ENGINE_MONTH_VERSION}
+    container_name: months_worker
+    environment:
+      - CREDENTIALS_FOLDER_NAME=/temp
+      - JWT_KEY_LOCATION=/temp/jwt_token
+      - MEDIA_DB_HOST=media_db_api
+      - MEDIA_DB_PORT=5000
+      - USER_DB_HOST=auth_api
+      - USER_DB_PORT=5000
+      - PRIVATE_KEY_LOCATION=/temp/data
+      - DEBUG=1
+      - BATCH_SIZE=10
+      - BATCH_PROCESS_PERIOD_MIN=0.1
+      - LOG_LEVEL=20
+      - ENGINE_DETAILS__NAME=months
+      - ENGINE_DETAILS__DESCRIPTION=$MONTHS_DESCRIPTION
+      - ENGINE_DETAILS__INPUT_SOURCE=images_metadata
+      - ENGINE_DETAILS__INPUT_QUEUE_NAME=InputMonthEngine
+      - ENGINE_DETAILS__OUTPUT_EXCHANGE_NAME=insights_months
+      - AUTH_DB_CREDENTIALS_LOCATION=/db/cred/
+      - ENVIRONMENT
+    volumes:
+      - ${HOST_MOUNT}:/temp
+    restart: always
+    networks:
+      - shkedia-cloud
+    secrets:
+      - source: private-key
+        target: /temp/data
+      - source: aws-config
+        target: /root/.aws/config
+      - source: aws-cred
+        target: /root/.aws/credentials
+      - source: db-user
+        target: /db/cred/user_name
+      - source: db-password
+        target: /db/cred/password
 
   nginx:
     image: public.ecr.aws/q2n5r5e8/project-shkedia/nginx-service:${NGINX_SERVICE_VERSION}
@@ -128,6 +177,9 @@ services:
       - /var/static:/var/static
       - ${NGINX_CONFIG_LOCATION}:/etc/nginx/nginx.conf
     restart: always
+    depends_on:
+      - upload-api
+      - gallery-backend
     networks:
       - shkedia-cloud
     secrets:
@@ -156,3 +208,7 @@ secrets:
     file: ${AWS_CONFIG}
   aws-cred:
     file: ${AWS_CRED}
+  db-password:
+    file: ${DB_PASSWORD}
+  db-user:
+    file: ${DB_USER_NAME}
