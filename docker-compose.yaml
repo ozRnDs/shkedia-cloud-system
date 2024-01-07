@@ -8,8 +8,8 @@ services:
     expose:
       - "5000"
     restart: always
-    ports:
-      - "4432:5000"
+#    ports:
+#      - "4432:5000"
     networks:
       - shkedia-cloud
     secrets:
@@ -28,8 +28,8 @@ services:
     expose:
       - "5000"
     restart: always
-    ports:
-      - "4431:5000"
+#    ports:
+#      - "4431:5000"
     networks:
       - shkedia-cloud
     secrets:
@@ -49,8 +49,8 @@ services:
     expose:
       - "5000"
     restart: always
-    ports:
-      - "4430:5000"
+ #   ports:
+ #    - "4430:5000"
     networks:
       - shkedia-cloud
     secrets:
@@ -76,8 +76,8 @@ services:
       - JWT_KEY_LOCATION=/temp/jwt_token
     expose:
       - "5000"
-    ports:
-      - "4433:5000"
+ #   ports:
+ #     - "4433:5000"
     restart: always
     networks:
       - shkedia-cloud
@@ -103,11 +103,12 @@ services:
       - THUMBNAIL_MAX_HEIGHT=500
       - THUMBNAIL_MAX_WIDTH=500
       - LOCAL_CACHE_LOCATION=/temp/local_cache.pickle
-      - DEBUG=1
+      - PRIVATE_KEY_LOCATION=/temp/data
+      - DEBUG=0
     expose:
       - "8000"
-    ports:
-      - "4435:8000"
+ #   ports:
+ #     - "4435:8000"
     volumes:
       - ${HOST_MOUNT}:/temp
     restart: always
